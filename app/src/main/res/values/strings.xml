@@ -12,4 +12,5 @@
     <string name="permission_rationale">Location permission needed for core functionality</string>
     <string name="task_one_completed">Task #1 completed</string>
     <string name="ok">OK</string>
+    <string name="service_start_successfully">Service Start Successfully.</string>
 </resources>

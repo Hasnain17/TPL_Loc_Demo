@@ -1,6 +1,7 @@
 package com.app.tplmaps.tplloctemp.views
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -10,7 +11,6 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.tplmaps.tplloctemp.R
@@ -21,6 +21,7 @@ import com.app.tplmaps.tplloctemp.db.model.POI
 import com.app.tplmaps.tplloctemp.db.repo.LocationRepository
 import com.app.tplmaps.tplloctemp.db.viewModel.LocationViewModel
 import com.app.tplmaps.tplloctemp.db.viewModel.LocationVmProviderFactory
+import com.app.tplmaps.tplloctemp.utils.LocationService
 import com.app.tplmaps.tplloctemp.utils.PermissionUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -28,12 +29,14 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 
-
 class MainActivity : AppCompatActivity() {
     private lateinit var locationViewModel: LocationViewModel
 
     private lateinit var locationAdapter: LocationAdapter
-    private lateinit var looper: Looper
+
+    var mLocationService: LocationService = LocationService()
+    lateinit var mServiceIntent: Intent
+
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 999
@@ -51,12 +54,27 @@ class MainActivity : AppCompatActivity() {
         initResultsViewModel()
 
 
+
         binding.btnStart.setOnClickListener{
             when {
                 PermissionUtils.isAccessFineLocationGranted(this) -> {
                     when {
                         PermissionUtils.isLocationEnabled(this) -> {
                             setUpLocationListener()
+                            mLocationService = LocationService()
+                            mServiceIntent = Intent(this, mLocationService.javaClass)
+                            if (!PermissionUtils.isMyServiceRunning(
+                                    mLocationService.javaClass,
+                                    this
+                                )
+                            ) {
+                                startService(mServiceIntent)
+                                Toast.makeText(
+                                    this,
+                                    getString(R.string.service_start_successfully),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                         else -> {
                             PermissionUtils.showGPSNotEnabledDialog(this)
@@ -161,6 +179,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        if (::mServiceIntent.isInitialized) {
+            stopService(mServiceIntent)
+        }
+        super.onDestroy()
     }
 }
 

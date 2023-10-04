@@ -5,12 +5,15 @@ package com.app.tplmaps.tplloctemp.utils
  * @Date: 04/10/2023
  */
 import android.Manifest
+import android.app.Activity
+import android.app.ActivityManager
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -37,7 +40,18 @@ fun requestAccessFineLocationPermission(activity: AppCompatActivity, requestId: 
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
     }
-
+    fun isMyServiceRunning(serviceClass: Class<*>, mActivity: Activity): Boolean {
+        val manager: ActivityManager =
+            mActivity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                Log.i("Service status", "Running")
+                return true
+            }
+        }
+        Log.i("Service status", "Not running")
+        return false
+    }
     /**
      * Function to check if location of the device is enabled or not
      */
