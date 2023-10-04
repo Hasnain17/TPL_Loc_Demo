@@ -43,11 +43,34 @@ class MainActivity : AppCompatActivity() {
 
 
     private lateinit var binding: ActivityMainBinding
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding=ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initResultsViewModel()
+
+
+        binding.btnStart.setOnClickListener{
+            when {
+                PermissionUtils.isAccessFineLocationGranted(this) -> {
+                    when {
+                        PermissionUtils.isLocationEnabled(this) -> {
+                            setUpLocationListener()
+                        }
+                        else -> {
+                            PermissionUtils.showGPSNotEnabledDialog(this)
+                        }
+                    }
+                }
+                else -> {
+                    PermissionUtils.requestAccessFineLocationPermission(
+                        this,
+                        LOCATION_PERMISSION_REQUEST_CODE
+                    )
+                }
+            }        }
+
         binding.btnStop.setOnClickListener{
             if (fusedLocationProviderClient!=null){
 
@@ -108,30 +131,7 @@ class MainActivity : AppCompatActivity() {
             },Looper.myLooper()
         )
     }
-    @RequiresApi(Build.VERSION_CODES.S)
-    override fun onStart() {
-        super.onStart()
-        when {
-            PermissionUtils.isAccessFineLocationGranted(this) -> {
-                when {
-                    PermissionUtils.isLocationEnabled(this) -> {
-                        binding.btnStart.setOnClickListener{
-                            setUpLocationListener()
-                        }
-                    }
-                    else -> {
-                        PermissionUtils.showGPSNotEnabledDialog(this)
-                    }
-                }
-            }
-            else -> {
-                PermissionUtils.requestAccessFineLocationPermission(
-                    this,
-                    LOCATION_PERMISSION_REQUEST_CODE
-                )
-            }
-        }
-    }
+
 
 
     @RequiresApi(Build.VERSION_CODES.S)
@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     when {
                         PermissionUtils.isLocationEnabled(this) -> {
-//                            setUpLocationListener()
+                            setUpLocationListener()
                         }
                         else -> {
                             PermissionUtils.showGPSNotEnabledDialog(this)
