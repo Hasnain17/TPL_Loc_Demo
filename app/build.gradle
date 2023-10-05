@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId "com.app.tplmaps.tplloctemp"
-        minSdk 23
+        minSdk 24
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -72,5 +72,5 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.1"
 
     implementation 'androidx.appcompat:appcompat:1.1.0-alpha04'
-
+    implementation("org.greenrobot:eventbus:3.3.1")
 }

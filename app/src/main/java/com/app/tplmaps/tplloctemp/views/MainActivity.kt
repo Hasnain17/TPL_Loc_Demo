@@ -1,19 +1,15 @@
 package com.app.tplmaps.tplloctemp.views
 
-import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Looper
 import android.view.View
-import android.widget.Toast
-import androidx.annotation.RequiresApi
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.app.tplmaps.tplloctemp.R
 import com.app.tplmaps.tplloctemp.adapter.LocationAdapter
 import com.app.tplmaps.tplloctemp.databinding.ActivityMainBinding
 import com.app.tplmaps.tplloctemp.db.database.LocationsDatabase
@@ -21,78 +17,70 @@ import com.app.tplmaps.tplloctemp.db.model.POI
 import com.app.tplmaps.tplloctemp.db.repo.LocationRepository
 import com.app.tplmaps.tplloctemp.db.viewModel.LocationViewModel
 import com.app.tplmaps.tplloctemp.db.viewModel.LocationVmProviderFactory
+import com.app.tplmaps.tplloctemp.utils.LocationEvent
 import com.app.tplmaps.tplloctemp.utils.LocationService
-import com.app.tplmaps.tplloctemp.utils.PermissionUtils
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
 
 class MainActivity : AppCompatActivity() {
+
+    private var _binding: ActivityMainBinding? = null
+    private val binding: ActivityMainBinding
+        get() = _binding!!
+
+
+    private var service: Intent?=null
+
+    private val backgroundLocation =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            if (it) {
+
+            }
+        }
     private lateinit var locationViewModel: LocationViewModel
 
     private lateinit var locationAdapter: LocationAdapter
 
-    var mLocationService: LocationService = LocationService()
-    lateinit var mServiceIntent: Intent
+    private val locationPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            when {
+                it.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
 
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        if (ActivityCompat.checkSelfPermission(
+                                this,
+                                android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            backgroundLocation.launch(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        }
+                    }
 
-    companion object {
-        private const val LOCATION_PERMISSION_REQUEST_CODE = 999
-    }
+                }
+                it.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
 
-    private lateinit var fusedLocationProviderClient:FusedLocationProviderClient
-
-
-    private lateinit var binding: ActivityMainBinding
-    @RequiresApi(Build.VERSION_CODES.S)
+                }
+            }
+        }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding=ActivityMainBinding.inflate(layoutInflater)
+        _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        service = Intent(this,LocationService::class.java)
+
         initResultsViewModel()
 
 
 
         binding.btnStart.setOnClickListener{
-            when {
-                PermissionUtils.isAccessFineLocationGranted(this) -> {
-                    when {
-                        PermissionUtils.isLocationEnabled(this) -> {
-                            setUpLocationListener()
-                            mLocationService = LocationService()
-                            mServiceIntent = Intent(this, mLocationService.javaClass)
-                            if (!PermissionUtils.isMyServiceRunning(
-                                    mLocationService.javaClass,
-                                    this
-                                )
-                            ) {
-                                startService(mServiceIntent)
-                                Toast.makeText(
-                                    this,
-                                    getString(R.string.service_start_successfully),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                        else -> {
-                            PermissionUtils.showGPSNotEnabledDialog(this)
-                        }
-                    }
-                }
-                else -> {
-                    PermissionUtils.requestAccessFineLocationPermission(
-                        this,
-                        LOCATION_PERMISSION_REQUEST_CODE
-                    )
-                }
-            }        }
+            checkPermissions()
+
+        }
 
         binding.btnStop.setOnClickListener{
-            if (fusedLocationProviderClient!=null){
-
-            }
+            stopService(service)
+            isFromStop=true
         }
 
         binding.btnShow.setOnClickListener {
@@ -116,76 +104,52 @@ class MainActivity : AppCompatActivity() {
         locationViewModel= ViewModelProvider(this,viewModProviderFactory)[LocationViewModel::class.java]
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun setUpLocationListener() {
-        fusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(this)
-        // for getting the current location update after every 5 seconds with high accuracy
-        val locationRequest = com.google.android.gms.location.LocationRequest().setInterval(5000).setFastestInterval(5000)
-            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
+    override fun onStart() {
+        super.onStart()
+        if(!EventBus.getDefault().isRegistered(this)){
+            EventBus.getDefault().register(this)
         }
-        fusedLocationProviderClient.requestLocationUpdates(
-            locationRequest,
-            object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    super.onLocationResult(locationResult)
-                    for (location in locationResult.locations) {
-                        binding.latTextView.text = location.latitude.toString()
-                        binding.lngTextView.text = location.longitude.toString()
-                        val poi=POI(0,location.longitude.toString(),location.latitude.toString())
-                        locationViewModel.addLocation(poi)
-                    }
-                    // Few more things we can do here:
-                    // For example: Update the location of user on server
-                }
-            },Looper.myLooper()
-        )
     }
 
-
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray,
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            LOCATION_PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    when {
-                        PermissionUtils.isLocationEnabled(this) -> {
-                            setUpLocationListener()
-                        }
-                        else -> {
-                            PermissionUtils.showGPSNotEnabledDialog(this)
-                        }
-                    }
-                } else {
-                    Toast.makeText(
-                        this,
-                        getString(R.string.location_permission_not_granted),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+    fun checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                locationPermissions.launch(
+                    arrayOf(
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            }else{
+                startService(service)
             }
         }
     }
-
     override fun onDestroy() {
-        if (::mServiceIntent.isInitialized) {
-            stopService(mServiceIntent)
+        stopService(service)
+        if(EventBus.getDefault().isRegistered(this)){
+            EventBus.getDefault().unregister(this)
         }
         super.onDestroy()
+    }
+
+    @Subscribe
+    fun receiveLocationEvent(locationEvent: LocationEvent){
+        binding.latTextView.text = "Latitude -> ${locationEvent.latitude}"
+        binding.lngTextView.text = "Longitude -> ${locationEvent.longitude}"
+
+        val poi=POI(0,locationEvent.longitude.toString(),locationEvent.latitude.toString())
+        locationViewModel.addLocation(poi)
+    }
+    companion object{
+        var isFromStop=false
     }
 }
 
