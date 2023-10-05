@@ -14,13 +14,38 @@ import android.widget.Toast
 class RestartBackgroundService: BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
+
+
+/*        val serviceIntent = Intent(context, LocationService::class.java)
+        context!!.startService(serviceIntent)
         Log.i("Broadcast Listened", "Service tried to stop")
-        Toast.makeText(context, "Service restarted", Toast.LENGTH_SHORT).show()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context!!.startForegroundService(Intent(context, LocationService::class.java))
+//            context!!.startForegroundService(Intent(context, LocationService::class.java))
+            context.startService(serviceIntent)
+
+
         } else {
-            context!!.startService(Intent(context, LocationService::class.java))
+//            context!!.startService(Intent(context, LocationService::class.java))
+            context.startService(serviceIntent)
+
+        }*/
+
+
+
+        try {
+            val intentService = Intent(context, LocationService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context?.startForegroundService(intentService)
+                Toast.makeText(context, "Service restarted", Toast.LENGTH_SHORT).show()
+
+            } else {
+                context?.startService(intentService)
+                Toast.makeText(context, "Service restarted", Toast.LENGTH_SHORT).show()
+
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
