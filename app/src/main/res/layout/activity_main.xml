@@ -7,15 +7,28 @@
     android:id="@+id/activity_main"
     tools:context=".views.MainActivity">
 
-
-
+    <TextView
+        android:id="@+id/tvTop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="20dp"
+        android:fontFamily="monospace"
+        android:textSize="23sp"
+        android:text="Real Time - Results"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:textAlignment="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
         <LinearLayout
             android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvTop"
             android:orientation="horizontal">
             <TextView
                 android:id="@+id/latTextView"
@@ -59,6 +72,7 @@
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintTop_toBottomOf="@id/view_0"/>
     <Button
+        android:visibility="gone"
         android:id="@+id/btnStop"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -72,6 +86,7 @@
         app:layout_constraintEnd_toEndOf="@id/btnStart"
         app:layout_constraintTop_toBottomOf="@id/btnStart"/>
     <Button
+        android:visibility="gone"
         android:id="@+id/btnShow"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -81,12 +96,104 @@
         android:textSize="30sp"
         android:paddingHorizontal="50dp"
         android:paddingVertical="10dp"
-        app:layout_constraintStart_toStartOf="@id/btnStop"
+        app:layout_constraintStart_toStartOf="@id/btnStart"
         app:layout_constraintEnd_toEndOf="@id/btnStart"
         app:layout_constraintTop_toBottomOf="@id/btnStop"/>
 
 
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/linearLayoutStart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnShow"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/latTextViewStart"
+            android:layout_width="match_parent"
+            android:layout_height="50sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginBottom="8dp"
+            />
+        <TextView
+            android:id="@+id/lngTextViewStart"
+            android:layout_width="match_parent"
+            android:layout_height="50sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginBottom="5dp"
+            />
+    </LinearLayout>
+
+    <View
+        android:visibility="gone"
+        android:id="@+id/view_1"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@android:color/darker_gray"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/linearLayoutStart"/>
+
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/linearLayoutEnd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/view_1"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/latTextViewEnd"
+            android:layout_width="match_parent"
+            android:layout_height="50sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginBottom="8dp"
+            />
+        <TextView
+            android:id="@+id/lngTextViewEnd"
+            android:layout_width="match_parent"
+            android:layout_height="50sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginBottom="5dp"
+            />
+    </LinearLayout>
+
+    <View
+        android:visibility="gone"
+        android:id="@+id/view_2"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@android:color/darker_gray"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/linearLayoutEnd"/>
+
+
+    <TextView
+        android:id="@+id/tvTotalDistance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="20dp"
+        android:fontFamily="monospace"
+        android:textSize="23sp"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:textAlignment="center"
+        app:layout_constraintTop_toBottomOf="@id/view_2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
     <androidx.recyclerview.widget.RecyclerView
+        android:visibility="gone"
         android:id="@+id/rvLocations"
         android:layout_width="0dp"
         android:layout_height="0dp"

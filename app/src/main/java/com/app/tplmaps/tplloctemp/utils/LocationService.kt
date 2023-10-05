@@ -16,17 +16,28 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.ViewModelProvider
+import com.app.tplmaps.tplloctemp.MyApp
 import com.app.tplmaps.tplloctemp.views.MainActivity
 import com.google.android.gms.location.*
 import org.greenrobot.eventbus.EventBus
 import java.util.Timer
 import java.util.TimerTask
 import com.app.tplmaps.tplloctemp.R
+import com.app.tplmaps.tplloctemp.db.database.LocationsDatabase
+import com.app.tplmaps.tplloctemp.db.model.POI
+import com.app.tplmaps.tplloctemp.db.repo.LocationRepository
+import com.app.tplmaps.tplloctemp.db.viewModel.LocationViewModel
+import com.app.tplmaps.tplloctemp.db.viewModel.LocationVmProviderFactory
 
 class LocationService : Service() {
+
+
+
     var counter = 0
     var latitude: Double = 0.0
     var longitude: Double = 0.0
+    var starLoc=true
 
     companion object {
         const val CHANNEL_ID = "12345"
@@ -40,10 +51,10 @@ class LocationService : Service() {
     private var notificationManager: NotificationManager? = null
 
     private var location:Location?=null
+    private var startLocation:Location?=null
 
     override fun onCreate() {
         super.onCreate()
-
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         locationRequest =
             LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000).setIntervalMillis(500)
@@ -63,6 +74,7 @@ class LocationService : Service() {
             val notificationChannel =
                 NotificationChannel(CHANNEL_ID, "locations", NotificationManager.IMPORTANCE_HIGH)
             notificationManager?.createNotificationChannel(notificationChannel)
+            startForeground(NOTIFICATION_ID,getNotification())
         }
     }
 
@@ -79,6 +91,9 @@ class LocationService : Service() {
     }
 
     private fun removeLocationUpdates(){
+
+        MyApp.prefs.push("endLocLat",location?.latitude.toString())
+        MyApp.prefs.push("endLocLong",location?.longitude.toString())
         locationCallback?.let {
             fusedLocationProviderClient?.removeLocationUpdates(it)
         }
@@ -88,19 +103,26 @@ class LocationService : Service() {
 
     private fun onNewLocation(locationResult: LocationResult) {
         location = locationResult.lastLocation
+
         EventBus.getDefault().post(LocationEvent(
             latitude = location?.latitude,
             longitude = location?.longitude
         ))
-        startForeground(NOTIFICATION_ID,getNotification())
+        if (starLoc){
+            starLoc=false
+            MyApp.prefs.push("startLocLat",location?.latitude.toString())
+            MyApp.prefs.push("startLocLong",location?.longitude.toString())
+        }
+//Show notification on each location update.
+//        startForeground(NOTIFICATION_ID,getNotification())
     }
 
     fun getNotification():Notification{
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Location Updates")
-            .setContentText(
+            .setContentTitle("Location Updates TPL")
+         /*   .setContentText(
                 "Latitude--> ${location?.latitude}\nLongitude --> ${location?.longitude}"
-            )
+            )*/
             .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setOngoing(true)
